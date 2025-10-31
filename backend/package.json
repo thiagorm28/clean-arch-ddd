@@ -5,6 +5,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "test": "node 'node_modules/.bin/jest'",
+    "start": "npx nodemon src/api.ts"
+  },
   "description": "",
   "dependencies": {
     "@types/cors": "^2.8.19",
