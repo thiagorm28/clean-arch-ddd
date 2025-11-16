@@ -1,14 +1,24 @@
-import GetAccount from "../src/GetAccount";
-import Signup from "../src/Signup";
-import AccountRepositoryDatabase from "../src/AccountRepository";
+import GetAccount from "../src/application/usecase/GetAccount";
+import Signup from "../src/application/usecase/Signup";
+import DatabaseConnection, {
+  PgPromiseAdapter,
+} from "../src/infra/database/DatabaseConnection";
+import Registry from "../src/infra/di/Registry";
+import AccountRepositoryDatabase from "../src/infra/repository/AccountRepository";
 
 let getAccount: GetAccount;
 let signup: Signup;
+let connection: DatabaseConnection;
 
 beforeEach(() => {
-  const accountRepositoryDatabase = new AccountRepositoryDatabase();
-  signup = new Signup(accountRepositoryDatabase);
-  getAccount = new GetAccount(accountRepositoryDatabase);
+  connection = new PgPromiseAdapter();
+  Registry.getInstance().register("databaseConnection", connection);
+  Registry.getInstance().register(
+    "accountRepository",
+    new AccountRepositoryDatabase()
+  );
+  signup = new Signup();
+  getAccount = new GetAccount();
 });
 
 test("Deve buscar uma conta", async () => {
@@ -25,4 +35,8 @@ test("Deve buscar uma conta", async () => {
   expect(outputGetAccount.email).toBe(input.email);
   expect(outputGetAccount.document).toBe(input.document);
   expect(outputGetAccount.password).toBe(input.password);
+});
+
+afterEach(async () => {
+  await connection.close();
 });

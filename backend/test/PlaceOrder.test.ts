@@ -2,7 +2,7 @@ import Signup from "../src/application/usecase/Signup";
 import GetAccount from "../src/application/usecase/GetAccount";
 import AccountRepositoryDatabase from "../src/infra/repository/AccountRepository";
 import Deposit from "../src/application/usecase/Deposit";
-import Withdraw from "../src/application/usecase/Withdraw";
+import PlaceOrder from "../src/application/usecase/PlaceOrder";
 import DatabaseConnection, {
   PgPromiseAdapter,
 } from "../src/infra/database/DatabaseConnection";
@@ -11,7 +11,7 @@ import Registry from "../src/infra/di/Registry";
 let signup: Signup;
 let getAccount: GetAccount;
 let deposit: Deposit;
-let withdraw: Withdraw;
+let placeOrder: PlaceOrder;
 let connection: DatabaseConnection;
 
 beforeEach(() => {
@@ -24,10 +24,10 @@ beforeEach(() => {
   signup = new Signup();
   getAccount = new GetAccount();
   deposit = new Deposit();
-  withdraw = new Withdraw();
+  placeOrder = new PlaceOrder();
 });
 
-test("Deve fazer um saque", async () => {
+test("Deve criar uma ordem de compra", async () => {
   const inputSignup = {
     name: "John Doe",
     email: "john.doe@gmail.com",
@@ -38,48 +38,63 @@ test("Deve fazer um saque", async () => {
 
   const inputDeposit = {
     accountId: outputSignup.accountId,
-    assetId: "BTC",
-    quantity: 2,
+    assetId: "USD",
+    quantity: 10,
   };
   await deposit.execute(inputDeposit);
 
-  const inputwithdraw = {
+  const inputPlaceOrder = {
+    marketId: "BTC/USD",
+    accountId: outputSignup.accountId,
+    side: "buy",
+    quantity: 1,
+    price: 10,
+  };
+
+  const orderId = await placeOrder.execute(inputPlaceOrder);
+
+  const outputGetAccount = await getAccount.execute(outputSignup.accountId);
+  expect(orderId).toBeDefined();
+  expect(outputGetAccount.orders).toHaveLength(1);
+  expect(outputGetAccount.orders[0].marketId).toBe("BTC/USD");
+  expect(outputGetAccount.orders[0].side).toBe("buy");
+  expect(outputGetAccount.orders[0].quantity).toBe(1);
+  expect(outputGetAccount.orders[0].price).toBe(10);
+});
+
+test("Deve criar uma ordem de venda", async () => {
+  const inputSignup = {
+    name: "John Doe",
+    email: "john.doe@gmail.com",
+    document: "97456321558",
+    password: "asdQWE123",
+  };
+  const outputSignup = await signup.execute(inputSignup);
+
+  const inputDeposit = {
     accountId: outputSignup.accountId,
     assetId: "BTC",
     quantity: 1,
   };
-  await withdraw.execute(inputwithdraw);
-  const outputGetAccount = await getAccount.execute(outputSignup.accountId);
-  expect(outputGetAccount.assets).toHaveLength(1);
-  expect(outputGetAccount.assets[0].assetId).toBe("BTC");
-  expect(outputGetAccount.assets[0].quantity).toBe(1);
-});
-
-test("Não deve fazer um saque quando saldo insuficiente", async () => {
-  const inputSignup = {
-    name: "John Doe",
-    email: "john.doe@gmail.com",
-    document: "97456321558",
-    password: "asdQWE123",
-  };
-  const outputSignup = await signup.execute(inputSignup);
-
-  const inputDeposit = {
-    accountId: outputSignup.accountId,
-    assetId: "BTC",
-    quantity: 2,
-  };
   await deposit.execute(inputDeposit);
 
-  const inputwithdraw = {
+  const inputPlaceOrder = {
+    marketId: "BTC/USD",
     accountId: outputSignup.accountId,
-    assetId: "BTC",
-    quantity: 3,
+    side: "sell",
+    quantity: 1,
+    price: 10,
   };
 
-  expect(withdraw.execute(inputwithdraw)).rejects.toThrow(
-    new Error("Insufficient funds")
-  );
+  const orderId = await placeOrder.execute(inputPlaceOrder);
+
+  const outputGetAccount = await getAccount.execute(outputSignup.accountId);
+  expect(orderId).toBeDefined();
+  expect(outputGetAccount.orders).toHaveLength(1);
+  expect(outputGetAccount.orders[0].marketId).toBe("BTC/USD");
+  expect(outputGetAccount.orders[0].side).toBe("sell");
+  expect(outputGetAccount.orders[0].quantity).toBe(1);
+  expect(outputGetAccount.orders[0].price).toBe(10);
 });
 
 afterEach(async () => {

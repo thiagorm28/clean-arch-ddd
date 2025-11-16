@@ -4,9 +4,11 @@ import { validateCpf } from "./validateCpf";
 import { validateEmail } from "./validateEmail";
 import { validateName } from "./validateName";
 import { validatePassword } from "./validatePassword";
+import Order from "./Order";
 
 export default class Account {
   assets: Asset[];
+  orders: Order[];
 
   constructor(
     readonly accountId: string,
@@ -14,7 +16,8 @@ export default class Account {
     readonly email: string,
     readonly document: string,
     readonly password: string,
-    assets: Asset[]
+    assets: Asset[],
+    orders: Order[]
   ) {
     if (!name || !validateName(name)) throw new Error("Invalid name");
     if (!email || !validateEmail(email)) throw new Error("Invalid email");
@@ -23,6 +26,7 @@ export default class Account {
     if (!password || !validatePassword(password))
       throw new Error("Invalid password");
     this.assets = assets;
+    this.orders = orders;
   }
 
   static create(
@@ -33,7 +37,16 @@ export default class Account {
   ): Account {
     const accountId = generateUUID();
     const assets: Asset[] = [];
-    return new Account(accountId, name, email, document, password, assets);
+    const orders: Order[] = [];
+    return new Account(
+      accountId,
+      name,
+      email,
+      document,
+      password,
+      assets,
+      orders
+    );
   }
 
   static build(accountBuilder: AccountBuilder): Account {
@@ -70,6 +83,66 @@ export default class Account {
 
     asset.quantity -= quantity;
   }
+
+  placeOrder(
+    marketId: string,
+    side: string,
+    quantity: number,
+    price: number
+  ): string {
+    const [mainAssetId, paymentAssetId] = marketId.split("/");
+    const mainAsset = this.assets.find(
+      (asset) => asset.assetId === mainAssetId
+    );
+    const paymentAsset = this.assets.find(
+      (asset) => asset.assetId === paymentAssetId
+    );
+
+    let orderId = "";
+    if (side === "buy") {
+      if (!paymentAsset || paymentAsset.quantity < quantity * price) {
+        throw new Error("Insufficient funds");
+      }
+      const createdOrder = Order.create(marketId, side, quantity, price);
+      this.orders.push(createdOrder);
+
+      orderId = createdOrder.orderId;
+    } else {
+      if (!mainAsset || mainAsset.quantity < quantity) {
+        throw new Error("Insufficient funds");
+      }
+      const createdOrder = Order.create(marketId, side, quantity, price);
+      this.orders.push(createdOrder);
+
+      orderId = createdOrder.orderId;
+    }
+    return orderId;
+  }
+
+  //   executeOrder(
+  //   marketId: string,
+  //   accountId: string,
+  //   side: string,
+  //   quantity: number,
+  //   price: number
+  // ) {
+  //   const [mainAssetId, paymentAssetId] = marketId.split("/");
+  //   const mainAsset = this.assets.find(
+  //     (asset) => asset.assetId === mainAssetId
+  //   );
+  //   const paymentAsset = this.assets.find(
+  //     (asset) => asset.assetId === paymentAssetId
+  //   );
+
+  //   if (side === "buy") {
+  //     if (!paymentAsset) {
+  //       throw new Error("Insufficient funds");
+  //     }
+
+  //     paymentAsset.quantity -= quantity * price;
+  //     mainAsset.quantity += quantity;
+  //   }
+  // }
 
   getBalance(assetId: string) {
     const asset = this.assets.find((asset) => asset.assetId === assetId);
