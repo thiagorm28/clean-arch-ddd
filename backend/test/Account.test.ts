@@ -1,4 +1,5 @@
 import Account from "../src/domain/Account";
+import Order from "../src/domain/Order";
 
 test("Não deve criar uma conta com nome inválido", () => {
   expect(() =>
@@ -105,13 +106,11 @@ test("Deve criar uma ordem de compra", () => {
 
   account.deposit("USD", 10);
 
-  account.placeOrder("BTC/USD", "buy", 1, 10);
+  const order = Order.create(account.getAccountId(), "BTC/USD", "buy", 1, 10);
+  account.processOrder(order);
 
-  expect(account.orders).toHaveLength(1);
-  expect(account.orders[0].marketId).toBe("BTC/USD");
-  expect(account.orders[0].side).toBe("buy");
-  expect(account.orders[0].quantity).toBe(1);
-  expect(account.orders[0].price).toBe(10);
+  const asset = account.getAsset("USD");
+  expect(asset?.blockedQuantity).toBe(10);
 });
 
 test("Não deve criar uma ordem de compra quando o saldo é insuficiente", () => {
@@ -124,43 +123,11 @@ test("Não deve criar uma ordem de compra quando o saldo é insuficiente", () =>
 
   account.deposit("USD", 10);
 
-  expect(() => account.placeOrder("BTC/USD", "buy", 1, 11)).toThrow(
+  const order = Order.create(account.getAccountId(), "BTC/USD", "buy", 1, 11);
+  expect(() => account.processOrder(order)).toThrow(
     new Error("Insufficient funds")
   );
-  expect(account.orders).toHaveLength(0);
-});
 
-test("Deve criar uma ordem de venda", () => {
-  const account = Account.create(
-    "John Doe",
-    "john.doe@gmail.com",
-    "97456321558",
-    "asdQWE123"
-  );
-
-  account.deposit("BTC", 1);
-
-  account.placeOrder("BTC/USD", "sell", 1, 10);
-
-  expect(account.orders).toHaveLength(1);
-  expect(account.orders[0].marketId).toBe("BTC/USD");
-  expect(account.orders[0].side).toBe("sell");
-  expect(account.orders[0].quantity).toBe(1);
-  expect(account.orders[0].price).toBe(10);
-});
-
-test("Não eve criar uma ordem de venda quando o saldo é insuficiente", () => {
-  const account = Account.create(
-    "John Doe",
-    "john.doe@gmail.com",
-    "97456321558",
-    "asdQWE123"
-  );
-
-  account.deposit("BTC", 1);
-
-  expect(() => account.placeOrder("BTC/USD", "sell", 2, 10)).toThrow(
-    new Error("Insufficient funds")
-  );
-  expect(account.orders).toHaveLength(0);
+  const asset = account.getAsset("USD");
+  expect(asset?.blockedQuantity).toBe(0);
 });

@@ -85,6 +85,14 @@ export default class Account {
     return asset.quantity;
   }
 
+  getAsset(assetId: string) {
+    const asset = this.assets.find((asset) => asset.assetId === assetId);
+    if (!asset) {
+      return null;
+    }
+    return asset;
+  }
+
   processOrder(order: Order) {
     let assetId;
     let quantity;
