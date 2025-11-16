@@ -1,5 +1,4 @@
 import Signup from "../src/application/usecase/Signup";
-import GetAccount from "../src/application/usecase/GetAccount";
 import AccountRepositoryDatabase from "../src/infra/repository/AccountRepository";
 import Deposit from "../src/application/usecase/Deposit";
 import PlaceOrder from "../src/application/usecase/PlaceOrder";
@@ -7,11 +6,13 @@ import DatabaseConnection, {
   PgPromiseAdapter,
 } from "../src/infra/database/DatabaseConnection";
 import Registry from "../src/infra/di/Registry";
+import { OrderRepositoryDatabase } from "../src/infra/repository/OrderRepository";
+import GetOrder from "../src/application/usecase/GetOrder";
 
 let signup: Signup;
-let getAccount: GetAccount;
 let deposit: Deposit;
 let placeOrder: PlaceOrder;
+let getOrder: GetOrder;
 let connection: DatabaseConnection;
 
 beforeEach(() => {
@@ -21,10 +22,14 @@ beforeEach(() => {
     "accountRepository",
     new AccountRepositoryDatabase()
   );
+  Registry.getInstance().register(
+    "orderRepository",
+    new OrderRepositoryDatabase()
+  );
   signup = new Signup();
-  getAccount = new GetAccount();
   deposit = new Deposit();
   placeOrder = new PlaceOrder();
+  getOrder = new GetOrder();
 });
 
 test("Deve criar uma ordem de compra", async () => {
@@ -53,13 +58,12 @@ test("Deve criar uma ordem de compra", async () => {
 
   const orderId = await placeOrder.execute(inputPlaceOrder);
 
-  const outputGetAccount = await getAccount.execute(outputSignup.accountId);
+  const outputGetOrder = await getOrder.execute(orderId);
   expect(orderId).toBeDefined();
-  expect(outputGetAccount.orders).toHaveLength(1);
-  expect(outputGetAccount.orders[0].marketId).toBe("BTC/USD");
-  expect(outputGetAccount.orders[0].side).toBe("buy");
-  expect(outputGetAccount.orders[0].quantity).toBe(1);
-  expect(outputGetAccount.orders[0].price).toBe(10);
+  expect(outputGetOrder.marketId).toBe("BTC/USD");
+  expect(outputGetOrder.side).toBe("buy");
+  expect(outputGetOrder.quantity).toBe(1);
+  expect(outputGetOrder.price).toBe(10);
 });
 
 test("Deve criar uma ordem de venda", async () => {
@@ -88,13 +92,12 @@ test("Deve criar uma ordem de venda", async () => {
 
   const orderId = await placeOrder.execute(inputPlaceOrder);
 
-  const outputGetAccount = await getAccount.execute(outputSignup.accountId);
+  const outputGetOrder = await getOrder.execute(orderId);
   expect(orderId).toBeDefined();
-  expect(outputGetAccount.orders).toHaveLength(1);
-  expect(outputGetAccount.orders[0].marketId).toBe("BTC/USD");
-  expect(outputGetAccount.orders[0].side).toBe("sell");
-  expect(outputGetAccount.orders[0].quantity).toBe(1);
-  expect(outputGetAccount.orders[0].price).toBe(10);
+  expect(outputGetOrder.marketId).toBe("BTC/USD");
+  expect(outputGetOrder.side).toBe("sell");
+  expect(outputGetOrder.quantity).toBe(1);
+  expect(outputGetOrder.price).toBe(10);
 });
 
 afterEach(async () => {

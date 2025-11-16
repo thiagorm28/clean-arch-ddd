@@ -34,34 +34,22 @@ export default class AccountRepositoryDatabase implements AccountRepository {
       [account.getAccountId()]
     );
     await this.connection.query(
-      "delete from ccca.order where account_id = $1",
-      [account.getAccountId()]
-    );
-    await this.connection.query(
       "delete from ccca.account where account_id = $1",
       [account.getAccountId()]
     );
 
     for (const asset of account.assets) {
       await this.connection.query(
-        "insert into ccca.account_asset (account_id, asset_id, quantity) values ($1, $2, $3)",
-        [account.getAccountId(), asset.assetId, asset.quantity]
-      );
-    }
-
-    for (const order of account.orders) {
-      await this.connection.query(
-        "insert into ccca.order (order_id, account_id, market_id, side, quantity, price) values ($1, $2, $3, $4, $5, $6)",
+        "insert into ccca.account_asset (account_id, asset_id, quantity, blocked_quantity) values ($1, $2, $3, $4)",
         [
-          order.orderId,
           account.getAccountId(),
-          order.marketId,
-          order.side,
-          order.quantity,
-          order.price,
+          asset.assetId,
+          asset.quantity,
+          asset.blockedQuantity,
         ]
       );
     }
+
     await this.connection.query(
       "insert into ccca.account (account_id, name, email, document, password) values ($1, $2, $3, $4, $5)",
       [
@@ -83,30 +71,14 @@ export default class AccountRepositoryDatabase implements AccountRepository {
       "select * from ccca.account_asset where account_id = $1",
       [accountId]
     );
-    const accountOrdersData = await this.connection.query(
-      "select * from ccca.order where account_id = $1",
-      [accountId]
-    );
 
     const assets: Asset[] = [];
     for (const accountAssetData of accountAssetsData) {
       assets.push(
         new Asset(
           accountAssetData.asset_id,
-          parseFloat(accountAssetData.quantity)
-        )
-      );
-    }
-
-    const orders: Order[] = [];
-    for (const accountOrderData of accountOrdersData) {
-      orders.push(
-        new Order(
-          accountOrderData.order_id,
-          accountOrderData.market_id,
-          accountOrderData.side,
-          parseFloat(accountOrderData.quantity),
-          parseFloat(accountOrderData.price)
+          parseFloat(accountAssetData.quantity),
+          parseFloat(accountAssetData.blocked_quantity)
         )
       );
     }
@@ -117,8 +89,7 @@ export default class AccountRepositoryDatabase implements AccountRepository {
       accountData.email,
       accountData.document,
       accountData.password,
-      assets,
-      orders
+      assets
     );
   }
 }

@@ -14,7 +14,6 @@ export default class Account {
   private document: Document;
   private password: Password;
   assets: Asset[];
-  orders: Order[];
 
   constructor(
     accountId: string,
@@ -22,8 +21,7 @@ export default class Account {
     email: string,
     document: string,
     password: string,
-    assets: Asset[],
-    orders: Order[]
+    assets: Asset[]
   ) {
     this.accountId = new UUID(accountId);
     this.name = new Name(name);
@@ -31,7 +29,6 @@ export default class Account {
     this.document = new Document(document);
     this.password = new Password(password);
     this.assets = assets;
-    this.orders = orders;
   }
 
   static create(
@@ -42,16 +39,7 @@ export default class Account {
   ): Account {
     const accountId = generateUUID();
     const assets: Asset[] = [];
-    const orders: Order[] = [];
-    return new Account(
-      accountId,
-      name,
-      email,
-      document,
-      password,
-      assets,
-      orders
-    );
+    return new Account(accountId, name, email, document, password, assets);
   }
 
   static build(accountBuilder: AccountBuilder): Account {
@@ -72,7 +60,7 @@ export default class Account {
     if (asset) {
       asset.quantity += quantity;
     } else {
-      this.assets.push(new Asset(assetId, quantity));
+      this.assets.push(new Asset(assetId, quantity, 0));
     }
   }
 
@@ -97,39 +85,23 @@ export default class Account {
     return asset.quantity;
   }
 
-  placeOrder(
-    marketId: string,
-    side: string,
-    quantity: number,
-    price: number
-  ): string {
-    const [mainAssetId, paymentAssetId] = marketId.split("/");
-    const mainAsset = this.assets.find(
-      (asset) => asset.assetId === mainAssetId
-    );
-    const paymentAsset = this.assets.find(
-      (asset) => asset.assetId === paymentAssetId
-    );
-
-    let orderId = "";
-    if (side === "buy") {
-      if (!paymentAsset || paymentAsset.quantity < quantity * price) {
-        throw new Error("Insufficient funds");
-      }
-      const createdOrder = Order.create(marketId, side, quantity, price);
-      this.orders.push(createdOrder);
-
-      orderId = createdOrder.orderId;
+  processOrder(order: Order) {
+    let assetId;
+    let quantity;
+    if (order.side === "buy") {
+      assetId = order.getPaymentAssetId();
+      quantity = order.quantity * order.price;
     } else {
-      if (!mainAsset || mainAsset.quantity < quantity) {
-        throw new Error("Insufficient funds");
-      }
-      const createdOrder = Order.create(marketId, side, quantity, price);
-      this.orders.push(createdOrder);
-
-      orderId = createdOrder.orderId;
+      assetId = order.getMainAssetId();
+      quantity = order.quantity;
     }
-    return orderId;
+
+    const asset = this.assets.find((asset: Asset) => asset.assetId === assetId);
+    if (!asset || quantity > asset.getBalance()) {
+      throw new Error("Insufficient funds");
+    }
+
+    asset.blockedQuantity += quantity;
   }
 
   getAccountId() {
