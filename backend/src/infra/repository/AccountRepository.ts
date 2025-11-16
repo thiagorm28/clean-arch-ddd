@@ -19,11 +19,11 @@ export default class AccountRepositoryDatabase implements AccountRepository {
     await this.connection.query(
       "insert into ccca.account (account_id, name, email, document, password) values ($1, $2, $3, $4, $5)",
       [
-        account.accountId,
-        account.name,
-        account.email,
-        account.document,
-        account.password,
+        account.getAccountId(),
+        account.getName(),
+        account.getEmail(),
+        account.getDocument(),
+        account.getPassword(),
       ]
     );
   }
@@ -31,21 +31,21 @@ export default class AccountRepositoryDatabase implements AccountRepository {
   async updateAccount(account: Account) {
     await this.connection.query(
       "delete from ccca.account_asset where account_id = $1",
-      [account.accountId]
+      [account.getAccountId()]
     );
     await this.connection.query(
       "delete from ccca.order where account_id = $1",
-      [account.accountId]
+      [account.getAccountId()]
     );
     await this.connection.query(
       "delete from ccca.account where account_id = $1",
-      [account.accountId]
+      [account.getAccountId()]
     );
 
     for (const asset of account.assets) {
       await this.connection.query(
         "insert into ccca.account_asset (account_id, asset_id, quantity) values ($1, $2, $3)",
-        [account.accountId, asset.assetId, asset.quantity]
+        [account.getAccountId(), asset.assetId, asset.quantity]
       );
     }
 
@@ -54,7 +54,7 @@ export default class AccountRepositoryDatabase implements AccountRepository {
         "insert into ccca.order (order_id, account_id, market_id, side, quantity, price) values ($1, $2, $3, $4, $5, $6)",
         [
           order.orderId,
-          account.accountId,
+          account.getAccountId(),
           order.marketId,
           order.side,
           order.quantity,
@@ -65,11 +65,11 @@ export default class AccountRepositoryDatabase implements AccountRepository {
     await this.connection.query(
       "insert into ccca.account (account_id, name, email, document, password) values ($1, $2, $3, $4, $5)",
       [
-        account.accountId,
-        account.name,
-        account.email,
-        account.document,
-        account.password,
+        account.getAccountId(),
+        account.getName(),
+        account.getEmail(),
+        account.getDocument(),
+        account.getPassword(),
       ]
     );
   }

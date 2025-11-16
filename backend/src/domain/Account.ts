@@ -1,30 +1,35 @@
 import Asset from "./Asset";
 import generateUUID from "./generateUUID";
-import { validateCpf } from "./validateCpf";
-import { validateEmail } from "./validateEmail";
-import { validateName } from "./validateName";
-import { validatePassword } from "./validatePassword";
 import Order from "./Order";
+import UUID from "./UUID";
+import Name from "./Name";
+import Email from "./Email";
+import Password from "./Password";
+import Document from "./Document";
 
 export default class Account {
+  private accountId: UUID;
+  private name: Name;
+  private email: Email;
+  private document: Document;
+  private password: Password;
   assets: Asset[];
   orders: Order[];
 
   constructor(
-    readonly accountId: string,
-    readonly name: string,
-    readonly email: string,
-    readonly document: string,
-    readonly password: string,
+    accountId: string,
+    name: string,
+    email: string,
+    document: string,
+    password: string,
     assets: Asset[],
     orders: Order[]
   ) {
-    if (!name || !validateName(name)) throw new Error("Invalid name");
-    if (!email || !validateEmail(email)) throw new Error("Invalid email");
-    if (!document || !validateCpf(document))
-      throw new Error("Invalid document");
-    if (!password || !validatePassword(password))
-      throw new Error("Invalid password");
+    this.accountId = new UUID(accountId);
+    this.name = new Name(name);
+    this.email = new Email(email);
+    this.document = new Document(document);
+    this.password = new Password(password);
     this.assets = assets;
     this.orders = orders;
   }
@@ -84,6 +89,14 @@ export default class Account {
     asset.quantity -= quantity;
   }
 
+  getBalance(assetId: string) {
+    const asset = this.assets.find((asset) => asset.assetId === assetId);
+    if (!asset) {
+      return 0;
+    }
+    return asset.quantity;
+  }
+
   placeOrder(
     marketId: string,
     side: string,
@@ -119,6 +132,26 @@ export default class Account {
     return orderId;
   }
 
+  getAccountId() {
+    return this.accountId.getValue();
+  }
+
+  getName() {
+    return this.name.getValue();
+  }
+
+  getEmail() {
+    return this.email.getValue();
+  }
+
+  getDocument() {
+    return this.document.getValue();
+  }
+
+  getPassword() {
+    return this.password.getValue();
+  }
+
   //   executeOrder(
   //   marketId: string,
   //   accountId: string,
@@ -143,14 +176,6 @@ export default class Account {
   //     mainAsset.quantity += quantity;
   //   }
   // }
-
-  getBalance(assetId: string) {
-    const asset = this.assets.find((asset) => asset.assetId === assetId);
-    if (!asset) {
-      return 0;
-    }
-    return asset.quantity;
-  }
 }
 
 type AccountBuilder = {
