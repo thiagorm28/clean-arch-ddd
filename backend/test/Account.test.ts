@@ -109,8 +109,7 @@ test("Deve criar uma ordem de compra", () => {
   const order = Order.create(account.getAccountId(), "BTC/USD", "buy", 1, 10);
   account.processOrder(order);
 
-  const asset = account.getAsset("USD");
-  expect(asset?.blockedQuantity).toBe(10);
+  expect(account.getBalance("USD")).toBe(0);
 });
 
 test("Não deve criar uma ordem de compra quando o saldo é insuficiente", () => {
@@ -128,6 +127,5 @@ test("Não deve criar uma ordem de compra quando o saldo é insuficiente", () =>
     new Error("Insufficient funds")
   );
 
-  const asset = account.getAsset("USD");
-  expect(asset?.blockedQuantity).toBe(0);
+  expect(account.getBalance("USD")).toBe(10);
 });

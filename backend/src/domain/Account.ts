@@ -82,15 +82,7 @@ export default class Account {
     if (!asset) {
       return 0;
     }
-    return asset.quantity;
-  }
-
-  getAsset(assetId: string) {
-    const asset = this.assets.find((asset) => asset.assetId === assetId);
-    if (!asset) {
-      return null;
-    }
-    return asset;
+    return asset.getBalance();
   }
 
   processOrder(order: Order) {
