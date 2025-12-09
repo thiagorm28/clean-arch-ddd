@@ -2,6 +2,7 @@ import sinon from "sinon";
 import Signup from "../src/application/usecase/Signup";
 import GetAccount from "../src/application/usecase/GetAccount";
 import AccountRepositoryDatabase from "../src/infra/repository/AccountRepository";
+import WalletRepositoryDatabase from "../src/infra/repository/WalletRepository";
 import DatabaseConnection, {
   PgPromiseAdapter,
 } from "../src/infra/database/DatabaseConnection";
@@ -17,6 +18,10 @@ beforeEach(() => {
   Registry.getInstance().register(
     "accountRepository",
     new AccountRepositoryDatabase()
+  );
+  Registry.getInstance().register(
+    "walletRepository",
+    new WalletRepositoryDatabase()
   );
   signup = new Signup();
   getAccount = new GetAccount();

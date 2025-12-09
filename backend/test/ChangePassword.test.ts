@@ -1,16 +1,16 @@
-import Signup from "../src/application/usecase/Signup";
+import ChangePassword from "../src/application/usecase/ChangePassword";
 import GetAccount from "../src/application/usecase/GetAccount";
-import AccountRepositoryDatabase from "../src/infra/repository/AccountRepository";
-import WalletRepositoryDatabase from "../src/infra/repository/WalletRepository";
-import Deposit from "../src/application/usecase/Deposit";
+import Signup from "../src/application/usecase/Signup";
 import DatabaseConnection, {
   PgPromiseAdapter,
 } from "../src/infra/database/DatabaseConnection";
 import Registry from "../src/infra/di/Registry";
+import AccountRepositoryDatabase from "../src/infra/repository/AccountRepository";
+import WalletRepositoryDatabase from "../src/infra/repository/WalletRepository";
 
-let signup: Signup;
 let getAccount: GetAccount;
-let deposit: Deposit;
+let signup: Signup;
+let changePassword: ChangePassword;
 let connection: DatabaseConnection;
 
 beforeEach(() => {
@@ -26,28 +26,26 @@ beforeEach(() => {
   );
   signup = new Signup();
   getAccount = new GetAccount();
-  deposit = new Deposit();
+  changePassword = new ChangePassword();
 });
 
-test("Deve fazer um depósito", async () => {
-  const inputSignup = {
+test("Deve alterar a senha de uma conta", async () => {
+  const signupInput = {
     name: "John Doe",
     email: "john.doe@gmail.com",
     document: "97456321558",
     password: "asdQWE123",
   };
-  const outputSignup = await signup.execute(inputSignup);
 
-  const inputDeposit = {
+  const outputSignup = await signup.execute(signupInput);
+  const changePasswordInput = {
     accountId: outputSignup.accountId,
-    assetId: "BTC",
-    quantity: 1,
+    newPassword: "newPassword123",
   };
-  await deposit.execute(inputDeposit);
+  await changePassword.execute(changePasswordInput);
   const outputGetAccount = await getAccount.execute(outputSignup.accountId);
-  expect(outputGetAccount.assets).toHaveLength(1);
-  expect(outputGetAccount.assets[0].assetId).toBe("BTC");
-  expect(outputGetAccount.assets[0].quantity).toBe(1);
+
+  expect(outputGetAccount.password).toBe(changePasswordInput.newPassword);
 });
 
 afterEach(async () => {

@@ -1,5 +1,6 @@
 import Signup from "../src/application/usecase/Signup";
 import AccountRepositoryDatabase from "../src/infra/repository/AccountRepository";
+import WalletRepositoryDatabase from "../src/infra/repository/WalletRepository";
 import Deposit from "../src/application/usecase/Deposit";
 import PlaceOrder from "../src/application/usecase/PlaceOrder";
 import DatabaseConnection, {
@@ -25,6 +26,10 @@ beforeEach(() => {
   Registry.getInstance().register(
     "orderRepository",
     new OrderRepositoryDatabase()
+  );
+  Registry.getInstance().register(
+    "walletRepository",
+    new WalletRepositoryDatabase()
   );
   signup = new Signup();
   deposit = new Deposit();

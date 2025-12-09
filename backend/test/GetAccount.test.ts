@@ -5,6 +5,7 @@ import DatabaseConnection, {
 } from "../src/infra/database/DatabaseConnection";
 import Registry from "../src/infra/di/Registry";
 import AccountRepositoryDatabase from "../src/infra/repository/AccountRepository";
+import WalletRepositoryDatabase from "../src/infra/repository/WalletRepository";
 
 let getAccount: GetAccount;
 let signup: Signup;
@@ -16,6 +17,10 @@ beforeEach(() => {
   Registry.getInstance().register(
     "accountRepository",
     new AccountRepositoryDatabase()
+  );
+  Registry.getInstance().register(
+    "walletRepository",
+    new WalletRepositoryDatabase()
   );
   signup = new Signup();
   getAccount = new GetAccount();

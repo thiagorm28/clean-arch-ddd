@@ -1,4 +1,5 @@
 import AccountRepositoryDatabase from "./infra/repository/AccountRepository";
+import WalletRepositoryDatabase from "./infra/repository/WalletRepository";
 import Signup from "./application/usecase/Signup";
 import GetAccount from "./application/usecase/GetAccount";
 import { PgPromiseAdapter } from "./infra/database/DatabaseConnection";
@@ -13,6 +14,10 @@ async function main() {
   Registry.getInstance().register(
     "accountRepository",
     new AccountRepositoryDatabase()
+  );
+  Registry.getInstance().register(
+    "walletRepository",
+    new WalletRepositoryDatabase()
   );
   Registry.getInstance().register("signup", new Signup());
   Registry.getInstance().register("getAccount", new GetAccount());
