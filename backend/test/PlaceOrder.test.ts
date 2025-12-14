@@ -11,11 +11,13 @@ import { OrderRepositoryDatabase } from "../src/infra/repository/OrderRepository
 import GetOrder from "../src/application/usecase/GetOrder";
 import Mediator from "../src/infra/mediator/Mediator";
 import Book from "../src/domain/Book";
+import GetDepth from "../src/application/usecase/GetDepth";
 
 let signup: Signup;
 let deposit: Deposit;
 let placeOrder: PlaceOrder;
 let getOrder: GetOrder;
+let getDepth: GetDepth;
 let connection: DatabaseConnection;
 let marketId: string;
 
@@ -50,9 +52,11 @@ beforeEach(() => {
   deposit = new Deposit();
   placeOrder = new PlaceOrder();
   getOrder = new GetOrder();
+  getDepth = new GetDepth();
 });
 
 test("Deve criar uma ordem de compra", async () => {
+  const marketId = `BTC/USD/${Math.random()}`;
   const inputSignup = {
     name: "John Doe",
     email: "john.doe@gmail.com",
@@ -69,7 +73,7 @@ test("Deve criar uma ordem de compra", async () => {
   await deposit.execute(inputDeposit);
 
   const inputPlaceOrder = {
-    marketId: "BTC/USD",
+    marketId: marketId,
     accountId: outputSignup.accountId,
     side: "buy",
     quantity: 1,
@@ -80,13 +84,18 @@ test("Deve criar uma ordem de compra", async () => {
 
   const outputGetOrder = await getOrder.execute(orderId);
   expect(orderId).toBeDefined();
-  expect(outputGetOrder.marketId).toBe("BTC/USD");
+  expect(outputGetOrder.marketId).toBe(marketId);
   expect(outputGetOrder.side).toBe("buy");
   expect(outputGetOrder.quantity).toBe(1);
   expect(outputGetOrder.price).toBe(10);
+  const outputGetDepth = await getDepth.execute(marketId);
+  expect(outputGetDepth.marketId).toBe(marketId);
+  expect(outputGetDepth.buys).toHaveLength(1);
+  expect(outputGetDepth.sells).toHaveLength(0);
 });
 
 test("Deve criar uma ordem de venda", async () => {
+  const marketId = `BTC/USD/${Math.random()}`;
   const inputSignup = {
     name: "John Doe",
     email: "john.doe@gmail.com",
@@ -103,7 +112,7 @@ test("Deve criar uma ordem de venda", async () => {
   await deposit.execute(inputDeposit);
 
   const inputPlaceOrder = {
-    marketId: "BTC/USD",
+    marketId: marketId,
     accountId: outputSignup.accountId,
     side: "sell",
     quantity: 1,
@@ -114,7 +123,7 @@ test("Deve criar uma ordem de venda", async () => {
 
   const outputGetOrder = await getOrder.execute(orderId);
   expect(orderId).toBeDefined();
-  expect(outputGetOrder.marketId).toBe("BTC/USD");
+  expect(outputGetOrder.marketId).toBe(marketId);
   expect(outputGetOrder.side).toBe("sell");
   expect(outputGetOrder.quantity).toBe(1);
   expect(outputGetOrder.price).toBe(10);
