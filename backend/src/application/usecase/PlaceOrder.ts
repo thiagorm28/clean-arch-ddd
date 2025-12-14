@@ -1,5 +1,6 @@
 import Order from "../../domain/Order";
 import { inject } from "../../infra/di/Registry";
+import Mediator from "../../infra/mediator/Mediator";
 import OrderRepository from "../../infra/repository/OrderRepository";
 import WalletRepository from "../../infra/repository/WalletRepository";
 
@@ -8,6 +9,8 @@ export default class PlaceOrder {
   walletRepository!: WalletRepository;
   @inject("orderRepository")
   orderRepository!: OrderRepository;
+  @inject("mediator")
+  mediator!: Mediator;
 
   async execute(input: Input): Promise<string> {
     const wallet = await this.walletRepository.getWallet(input.accountId);
@@ -23,6 +26,7 @@ export default class PlaceOrder {
 
     await this.orderRepository.saveOrder(order);
     await this.walletRepository.upsertWallet(wallet);
+    await this.mediator.notifyAll("orderPlaced", order);
 
     return order.getOrderId();
   }

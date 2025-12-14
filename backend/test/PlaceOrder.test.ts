@@ -9,28 +9,43 @@ import DatabaseConnection, {
 import Registry from "../src/infra/di/Registry";
 import { OrderRepositoryDatabase } from "../src/infra/repository/OrderRepository";
 import GetOrder from "../src/application/usecase/GetOrder";
+import Mediator from "../src/infra/mediator/Mediator";
+import Book from "../src/domain/Book";
 
 let signup: Signup;
 let deposit: Deposit;
 let placeOrder: PlaceOrder;
 let getOrder: GetOrder;
 let connection: DatabaseConnection;
+let marketId: string;
 
 beforeEach(() => {
   connection = new PgPromiseAdapter();
+  marketId = `BTC/USD/${Math.random()}`;
+
   Registry.getInstance().register("databaseConnection", connection);
   Registry.getInstance().register(
     "accountRepository",
     new AccountRepositoryDatabase()
   );
-  Registry.getInstance().register(
-    "orderRepository",
-    new OrderRepositoryDatabase()
-  );
+  const orderRepository = new OrderRepositoryDatabase();
+  Registry.getInstance().register("orderRepository", orderRepository);
   Registry.getInstance().register(
     "walletRepository",
     new WalletRepositoryDatabase()
   );
+
+  const book = new Book("BTC/USD");
+  book.register("orderFilled", async (order: any) => {
+    orderRepository.updateOrder(order);
+  });
+
+  const mediator = new Mediator();
+  mediator.register("orderPlaced", async (order: any) => {
+    await book.insert(order);
+  });
+  Registry.getInstance().register("mediator", mediator);
+
   signup = new Signup();
   deposit = new Deposit();
   placeOrder = new PlaceOrder();
@@ -103,6 +118,134 @@ test("Deve criar uma ordem de venda", async () => {
   expect(outputGetOrder.side).toBe("sell");
   expect(outputGetOrder.quantity).toBe(1);
   expect(outputGetOrder.price).toBe(10);
+});
+
+test("Deve criar ordens e executá-las", async () => {
+  const marketId = `BTC/USD/${Math.random()}`;
+  const inputSignup = {
+    name: "John Doe",
+    email: "john.doe@gmail.com",
+    document: "97456321558",
+    password: "asdQWE123",
+  };
+  const outputSignup = await signup.execute(inputSignup);
+
+  await deposit.execute({
+    accountId: outputSignup.accountId,
+    assetId: "USD",
+    quantity: 100,
+  });
+  await deposit.execute({
+    accountId: outputSignup.accountId,
+    assetId: "BTC",
+    quantity: 1,
+  });
+
+  const inputPlaceOrderBuy = {
+    marketId: marketId,
+    accountId: outputSignup.accountId,
+    side: "buy",
+    quantity: 1,
+    price: 10,
+  };
+
+  const inputPlaceOrderSell = {
+    marketId: marketId,
+    accountId: outputSignup.accountId,
+    side: "sell",
+    quantity: 1,
+    price: 8,
+  };
+
+  const buyOrderId = await placeOrder.execute(inputPlaceOrderBuy);
+  const sellOrderId = await placeOrder.execute(inputPlaceOrderSell);
+
+  const outputGetOrderBuy = await getOrder.execute(buyOrderId);
+  expect(outputGetOrderBuy.fillQuantity).toBe(1);
+  expect(outputGetOrderBuy.fillPrice).toBe(10);
+  expect(outputGetOrderBuy.status).toBe("closed");
+  const outputGetOrderSell = await getOrder.execute(sellOrderId);
+  expect(outputGetOrderSell.fillQuantity).toBe(1);
+  expect(outputGetOrderSell.fillPrice).toBe(10);
+  expect(outputGetOrderSell.status).toBe("closed");
+});
+
+test("Deve criar 1 ordem de compra e várias de venda", async () => {
+  const marketId = `BTC/USD/${Math.random()}`;
+  const inputSignup = {
+    name: "John Doe",
+    email: "john.doe@gmail.com",
+    document: "97456321558",
+    password: "asdQWE123",
+  };
+  const outputSignup = await signup.execute(inputSignup);
+
+  await deposit.execute({
+    accountId: outputSignup.accountId,
+    assetId: "USD",
+    quantity: 1000,
+  });
+
+  await deposit.execute({
+    accountId: outputSignup.accountId,
+    assetId: "BTC",
+    quantity: 1,
+  });
+
+  const inputPlaceOrderBuy1 = {
+    marketId: marketId,
+    accountId: outputSignup.accountId,
+    side: "buy",
+    quantity: 1,
+    price: 10,
+  };
+
+  const inputPlaceOrderBuy2 = {
+    marketId: marketId,
+    accountId: outputSignup.accountId,
+    side: "buy",
+    quantity: 1,
+    price: 9,
+  };
+
+  const inputPlaceOrderBuy3 = {
+    marketId: marketId,
+    accountId: outputSignup.accountId,
+    side: "buy",
+    quantity: 1,
+    price: 11,
+  };
+
+  const inputPlaceOrderSell = {
+    marketId: marketId,
+    accountId: outputSignup.accountId,
+    side: "sell",
+    quantity: 1,
+    price: 8,
+  };
+
+  const buyOrderId1 = await placeOrder.execute(inputPlaceOrderBuy1);
+  const buyOrderId2 = await placeOrder.execute(inputPlaceOrderBuy2);
+  const buyOrderId3 = await placeOrder.execute(inputPlaceOrderBuy3);
+  const sellOrderId = await placeOrder.execute(inputPlaceOrderSell);
+
+  const outputGetOrderBuy1 = await getOrder.execute(buyOrderId1);
+  const outputGetOrderBuy2 = await getOrder.execute(buyOrderId2);
+  const outputGetOrderBuy3 = await getOrder.execute(buyOrderId3);
+  expect(outputGetOrderBuy1.fillQuantity).toBe(0);
+  expect(outputGetOrderBuy1.fillPrice).toBe(0);
+  expect(outputGetOrderBuy1.status).toBe("open");
+  expect(outputGetOrderBuy2.fillQuantity).toBe(0);
+  expect(outputGetOrderBuy2.fillPrice).toBe(0);
+  expect(outputGetOrderBuy2.status).toBe("open");
+
+  expect(outputGetOrderBuy3.fillQuantity).toBe(1);
+  expect(outputGetOrderBuy3.fillPrice).toBe(11);
+  expect(outputGetOrderBuy3.status).toBe("closed");
+  const outputGetOrderSell = await getOrder.execute(sellOrderId);
+  expect(outputGetOrderSell.fillQuantity).toBe(1);
+  expect(outputGetOrderSell.fillPrice).toBe(11);
+  expect(outputGetOrderSell.status).toBe("closed");
 });
 
 afterEach(async () => {
