@@ -6,7 +6,6 @@ export default class FillOrder {
   orderRepository!: OrderRepository;
 
   async execute(input: Input): Promise<void> {
-    console.log(input.quantity);
     const order = await this.orderRepository.getOrderById(input.orderId);
     order.fill(input.quantity, input.price);
     await this.orderRepository.updateOrder(order);

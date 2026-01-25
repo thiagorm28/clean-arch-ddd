@@ -14,29 +14,28 @@ export default class Book extends Mediator {
       this.buys.push(order);
       this.buys.sort(
         (a, b) =>
-          b.price - a.price || a.timestamp.getTime() - b.timestamp.getTime()
+          b.price - a.price || a.timestamp.getTime() - b.timestamp.getTime(),
       );
     }
-
     if (order.side === "sell") {
       this.sells.push(order);
       this.sells.sort(
         (a, b) =>
-          a.price - b.price || a.timestamp.getTime() - b.timestamp.getTime()
+          a.price - b.price || a.timestamp.getTime() - b.timestamp.getTime(),
       );
     }
-
     await this.execute();
   }
 
   async execute() {
-    const highestBuy = this.buys[0];
-    const lowestSell = this.sells[0];
-
-    if (highestBuy && lowestSell && highestBuy.price >= lowestSell.price) {
+    while (true) {
+      const highestBuy = this.buys[0];
+      const lowestSell = this.sells[0];
+      if (!highestBuy || !lowestSell || highestBuy.price < lowestSell.price)
+        break;
       const fillQuantity = Math.min(
         highestBuy.getAvailableQuantity(),
-        lowestSell.getAvailableQuantity()
+        lowestSell.getAvailableQuantity(),
       );
       const fillPrice =
         highestBuy.timestamp.getTime() > lowestSell.timestamp.getTime()

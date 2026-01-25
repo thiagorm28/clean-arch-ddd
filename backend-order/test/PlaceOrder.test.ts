@@ -25,14 +25,14 @@ let marketId: string;
 
 beforeEach(() => {
   connection = new PgPromiseAdapter();
-  marketId = `BTC/USD/${Math.random()}`;
+  marketId = `BTC-USD-${Math.random()}`;
 
   Registry.getInstance().register("databaseConnection", connection);
   const orderRepository = new OrderRepositoryDatabase();
   Registry.getInstance().register("orderRepository", orderRepository);
   Registry.getInstance().register(
     "walletRepository",
-    new WalletRepositoryDatabase()
+    new WalletRepositoryDatabase(),
   );
 
   const mediator = new Mediator();
@@ -50,7 +50,7 @@ beforeEach(() => {
 });
 
 test("Deve criar uma ordem de compra", async () => {
-  const marketId = `BTC/USD/${Math.random()}`;
+  const marketId = `BTC-USD-${Math.random()}`;
   const inputSignup = {
     name: "John Doe",
     email: "john.doe@gmail.com",
@@ -89,7 +89,7 @@ test("Deve criar uma ordem de compra", async () => {
 });
 
 test("Deve criar uma ordem de venda", async () => {
-  const marketId = `BTC/USD/${Math.random()}`;
+  const marketId = `BTC-USD-${Math.random()}`;
   const inputSignup = {
     name: "John Doe",
     email: "john.doe@gmail.com",
@@ -124,7 +124,7 @@ test("Deve criar uma ordem de venda", async () => {
 });
 
 test("Deve criar ordens e executá-las", async () => {
-  const marketId = `BTC/USD/${Math.random()}`;
+  const marketId = `BTC-USD-${Math.random()}`;
   const inputSignup = {
     name: "John Doe",
     email: "john.doe@gmail.com",
@@ -174,7 +174,7 @@ test("Deve criar ordens e executá-las", async () => {
 });
 
 test("Deve criar 1 ordem de compra e várias de venda", async () => {
-  const marketId = `BTC/USD/${Math.random()}`;
+  const marketId = `BTC-USD-${Math.random()}`;
   const inputSignup = {
     name: "John Doe",
     email: "john.doe@gmail.com",

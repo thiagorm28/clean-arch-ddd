@@ -13,7 +13,7 @@ export default class Order {
     private status: string,
     readonly timestamp: Date,
     private fillQuantity: number,
-    private fillPrice: number
+    private fillPrice: number,
   ) {
     if (quantity <= 0) throw new Error("Quantity must be positive");
     if (price <= 0) throw new Error("Price must be positive");
@@ -27,7 +27,7 @@ export default class Order {
     marketId: string,
     side: string,
     quantity: number,
-    price: number
+    price: number,
   ): Order {
     const orderId = UUID.create();
     const status = "open";
@@ -42,7 +42,7 @@ export default class Order {
       status,
       timestamp,
       0,
-      0
+      0,
     );
   }
 
@@ -55,12 +55,12 @@ export default class Order {
   }
 
   getMainAssetId() {
-    const [mainAssetId, paymentAssetId] = this.marketId.split("/");
+    const [mainAssetId, paymentAssetId] = this.marketId.split("-");
     return mainAssetId;
   }
 
   getPaymentAssetId() {
-    const [mainAssetId, paymentAssetId] = this.marketId.split("/");
+    const [mainAssetId, paymentAssetId] = this.marketId.split("-");
     return paymentAssetId;
   }
 

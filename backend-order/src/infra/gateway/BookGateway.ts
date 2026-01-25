@@ -20,10 +20,8 @@ export class BookGatewayHttp implements BookGateway {
       timestamp: order.timestamp,
     };
     await axios.post(
-      `http://localhost:3001/markets/${encodeURIComponent(
-        order.marketId
-      )}/orders`,
-      body
+      `http://localhost:3001/markets/${order.marketId}/orders`,
+      body,
     );
   }
 }

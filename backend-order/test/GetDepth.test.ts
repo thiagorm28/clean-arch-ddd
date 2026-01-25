@@ -21,14 +21,14 @@ let marketId: string;
 
 beforeEach(() => {
   connection = new PgPromiseAdapter();
-  marketId = `BTC/USD/${Math.random()}`;
+  marketId = `BTC-USD-${Math.random()}`;
 
   Registry.getInstance().register("databaseConnection", connection);
   const orderRepository = new OrderRepositoryDatabase();
   Registry.getInstance().register("orderRepository", orderRepository);
   Registry.getInstance().register(
     "walletRepository",
-    new WalletRepositoryDatabase()
+    new WalletRepositoryDatabase(),
   );
   const mediator = new Mediator();
   Registry.getInstance().register("mediator", mediator);
@@ -40,7 +40,7 @@ beforeEach(() => {
 });
 
 test("Deve ter a quantidade correta de profundidade", async () => {
-  const marketId = `BTC/USD/${Math.random()}`;
+  const marketId = `BTC-USD-${Math.random()}`;
   const inputSignup = {
     name: "John Doe",
     email: "john.doe@gmail.com",
