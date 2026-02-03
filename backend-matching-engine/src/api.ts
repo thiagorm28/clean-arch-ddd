@@ -5,6 +5,7 @@ import BookController from "./infra/controller/BookController";
 import axios from "axios";
 import Book from "./domain/Book";
 import { RabbitMQAdapter } from "./infra/queue/Queue";
+import BookCache from "./infra/cache/BookCache";
 
 async function main() {
   const httpServer = new ExpressAdapter();
@@ -14,14 +15,8 @@ async function main() {
   Registry.getInstance().register("httpServer", httpServer);
   Registry.getInstance().register("queue", queue);
   Registry.getInstance().register("databaseConnection", new PgPromiseAdapter());
-  const book = new Book("BTC-USD");
+  Registry.getInstance().register("books", new BookCache());
 
-  book.register("orderFilled", async (data: any) => {
-    console.log("orderFilled");
-    // await axios.post("http://localhost:3000/fill_order", data);
-    queue.publish("orderFilled", data);
-  });
-  Registry.getInstance().register("book", book);
   new BookController();
   httpServer.listen(3001);
 }

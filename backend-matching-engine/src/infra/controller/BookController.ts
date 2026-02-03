@@ -3,12 +3,13 @@ import { inject } from "../di/Registry";
 import Book from "../../domain/Book";
 import Order from "../../domain/Order";
 import Queue from "../queue/Queue";
+import BookCache from "../cache/BookCache";
 
 export default class BookController {
   @inject("httpServer")
   httpServer!: HttpServer;
-  @inject("book")
-  book!: Book;
+  @inject("books")
+  books!: BookCache;
   @inject("queue")
   queue!: Queue;
 
@@ -29,7 +30,8 @@ export default class BookController {
           body.fillQuantity,
           body.fillPrice,
         );
-        await this.book.insert(order);
+        const book = this.books.getOrCreateBook(body.marketId);
+        await book.insert(order);
       },
     );
     this.queue.consume("orderPlaced.executeOrder", async (data: any) => {
@@ -45,7 +47,8 @@ export default class BookController {
         data.fillQuantity,
         data.fillPrice,
       );
-      await this.book.insert(order);
+      const book = this.books.getOrCreateBook(data.marketId);
+      await book.insert(order);
     });
   }
 }
