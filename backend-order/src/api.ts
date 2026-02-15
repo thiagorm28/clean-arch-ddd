@@ -19,7 +19,9 @@ async function main() {
   const queue = new RabbitMQAdapter();
   await queue.connect();
   await queue.setup("orderPlaced", "orderPlaced.executeOrder");
+  await queue.setup("orderPlaced", "orderPlaced.createOrderProjection");
   await queue.setup("orderFilled", "orderFilled.fillOrder");
+  await queue.setup("orderFilled", "orderFilled.updateOrderProjection");
 
   Registry.getInstance().register("mediator", mediator);
   Registry.getInstance().register("httpServer", httpServer);

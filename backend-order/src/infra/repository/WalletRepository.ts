@@ -32,12 +32,6 @@ export default class WalletRepositoryDatabase implements WalletRepository {
   }
 
   async getWallet(accountId: string): Promise<Wallet> {
-    const [accountData] = await this.connection.query(
-      "select 1 from ccca.account where account_id = $1",
-      [accountId]
-    );
-    if (!accountData) throw new Error("Account not found");
-
     const accountAssetsData = await this.connection.query(
       "select * from ccca.account_asset where account_id = $1",
       [accountId]
