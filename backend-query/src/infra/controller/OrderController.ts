@@ -1,6 +1,7 @@
 
 import CreateOrderProjection from "../../application/usecase/CreateOrderProjection";
 import GetOrders from "../../application/usecase/GetOrders";
+import UpdateDepthProjection from "../../application/usecase/UpdateDepthProjection";
 import UpdateOrderProjection from "../../application/usecase/UpdateOrderProjection";
 import { inject } from "../di/Registry";
 import HttpServer from "../http/HttpServer";
@@ -15,6 +16,8 @@ export default class OrderController {
   createOrderProjection!: CreateOrderProjection;
   @inject("updateOrderProjection")
   updateOrderProjection!: UpdateOrderProjection;
+  @inject("updateDepthProjection")
+  updateDepthProjection!: UpdateDepthProjection;
   @inject("queue")
   queue!: Queue;
 
@@ -36,6 +39,18 @@ export default class OrderController {
       console.log("updateOrderProjection");
       console.log(body);
       await this.updateOrderProjection.execute(body);
+    });
+    this.queue.consume("orderPlaced.updateDepthProjection", async (body: any) => {
+      console.log("orderPlaced.updateDepthProjection");
+      console.log(body);
+      body.event = "orderPlaced";
+      await this.updateDepthProjection.execute(body);
+    });
+    this.queue.consume("orderFilled.updateDepthProjection", async (body: any) => {
+      console.log("orderFilled.updateDepthProjection");
+      console.log(body);
+      body.event = "orderFilled";
+      await this.updateDepthProjection.execute(body);
     });
   }
 }

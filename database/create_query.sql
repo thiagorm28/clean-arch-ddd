@@ -17,3 +17,11 @@ create table ccca.order_projection (
 	timestamp timestamptz,
 	primary key (order_id)
 );
+
+create table ccca.depth_projection (
+	market_id text,
+	side text,
+	quantity numeric,
+	price numeric,
+	timestamp timestamptz,
+);

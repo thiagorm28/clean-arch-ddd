@@ -20,8 +20,10 @@ async function main() {
   await queue.connect();
   await queue.setup("orderPlaced", "orderPlaced.executeOrder");
   await queue.setup("orderPlaced", "orderPlaced.createOrderProjection");
+  await queue.setup("orderPlaced", "orderPlaced.updateDepthProjection");
   await queue.setup("orderFilled", "orderFilled.fillOrder");
   await queue.setup("orderFilled", "orderFilled.updateOrderProjection");
+  await queue.setup("orderFilled", "orderFilled.updateDepthProjection");
 
   Registry.getInstance().register("mediator", mediator);
   Registry.getInstance().register("httpServer", httpServer);

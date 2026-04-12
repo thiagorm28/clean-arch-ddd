@@ -9,6 +9,7 @@ import CreateOrderProjection from "./application/usecase/CreateOrderProjection";
 import UpdateOrderProjection from "./application/usecase/UpdateOrderProjection";
 import { OrderDAODatabase } from "./infra/dao/OrderDAO";
 import { AccountGatewayHttp } from "./infra/gateway/AccountGateway";
+import UpdateDepthProjection from "./application/usecase/UpdateDepthProjection";
 
 async function main() {
   const httpServer = new ExpressAdapter();
@@ -26,6 +27,7 @@ async function main() {
   Registry.getInstance().register("getOrders", new GetOrders());
   Registry.getInstance().register("createOrderProjection", new CreateOrderProjection());
   Registry.getInstance().register("updateOrderProjection", new UpdateOrderProjection());
+  Registry.getInstance().register("updateDepthProjection", new UpdateDepthProjection());
 
   new OrderController();
 
